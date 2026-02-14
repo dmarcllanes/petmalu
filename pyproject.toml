@@ -1,0 +1,12 @@
+[project]
+name = "lulupet"
+version = "0.1.0"
+description = "Pet Nutrition & Wellness SaaS"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-fasthtml",
+    "supabase",
+    "pydantic",
+    "python-dotenv",
+]

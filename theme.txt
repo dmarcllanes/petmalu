@@ -1,0 +1,92 @@
+LuluPet — Design Theme Summary
+================================
+
+COLORS
+------
+Primary (Teal)        #2F7A73    — Buttons, links, active states, navbar
+Primary Dark          #245F59    — Hover states, navbar gradient start
+Primary Light         #4A9B8E    — Secondary actions, card hover borders
+Secondary             #4A9B8E    — Lighter teal, complements primary
+Accent (Gold)         #D4A853    — Alerts, highlights, warnings
+Background            #F6F7F4    — Page background (warm off-white)
+Surface               #FFFFFF    — Cards, modals, inputs
+Text                  #2D2D2D    — Dark charcoal, headings & body
+Text Secondary        #6B7280    — Labels, hints, muted text
+Border                #E2E4DE    — Card borders, dividers, input borders
+Success               #43A047    — Completed states, positive feedback
+Error                 #E53935    — Errors, danger buttons, validation
+Warning               #D4A853    — Same as accent (warm gold)
+
+TINTED BACKGROUNDS
+------------------
+Primary tint          #E8F5F3    — Badge bg, avatar bg, hover tints
+Inactive dots         #B2DFDB    — Wizard step inactive circles
+Error tint            #FFEBEE    — Error message background
+Success tint          #E8F5E9    — Success badge background
+Warning tint          #FFF3E0    — Warning badge background
+Info tint             #E3F2FD    — Info badge background
+
+NAVBAR GRADIENT
+---------------
+linear-gradient(135deg, #245F59 0%, #2F7A73 50%, #4A9B8E 100%)
+
+TYPOGRAPHY
+----------
+Font Stack            -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif
+Body Size             1rem (16px)
+Body Weight           400
+Label Weight          600
+Heading Weight        700
+Stat/Hero Weight      800
+Line Height           1.6 (body), 1.2 (headings)
+
+BORDER RADIUS
+-------------
+Small (sm)            8px     — Buttons, inputs, small elements
+Medium                12px    — Cards, containers, dropdowns
+Large (lg)            16px    — Large cards, wizard shell
+Extra Large (xl)      24px    — Modals, detail cards
+Pill                  50px    — Badges, nav links, tags
+Circle                50%     — Avatars, wizard dots
+
+SHADOWS
+-------
+Small                 0 2px 4px rgba(0,0,0,0.05)    — Cards at rest
+Medium                0 4px 12px rgba(0,0,0,0.1)     — Elevated cards, navbar
+Large                 0 8px 24px rgba(0,0,0,0.15)    — Modals, dropdowns
+
+SPACING SCALE
+-------------
+0.25rem (4px)    — Tight gaps
+0.5rem  (8px)    — Small gaps
+0.75rem (12px)   — Card padding, icon gaps
+1rem    (16px)   — Standard padding/margin
+1.25rem (20px)   — Large section padding
+1.5rem  (24px)   — Section margins
+2rem    (32px)   — Large section gaps
+3rem    (48px)   — Empty state spacing
+
+ANIMATIONS
+----------
+fadeIn                0.25s    — Page transitions, content load
+slideUp               0.3s    — Mobile modal entry
+pulse                 2s ∞    — Status indicators
+
+TRANSITIONS
+-----------
+Fast                  0.2s ease    — Buttons, hover states
+Medium                0.25s ease   — Step transitions
+Slow                  0.3s ease    — Modals, toggles, wizard dots
+
+RESPONSIVE BREAKPOINTS
+----------------------
+Mobile                < 480px      — Single column, stacked actions
+Tablet                480–767px    — Wider padding
+Tablet Landscape      768px+       — 2-column grids, centered modals
+Desktop               1024px+      — Max-width 800px container
+
+THEME META
+----------
+PWA theme-color       #2F7A73
+PWA background        #F6F7F4
+Color scheme          light (forced)
