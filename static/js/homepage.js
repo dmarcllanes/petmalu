@@ -1,3 +1,10 @@
+// ==================== Auth Interceptor ====================
+// If Supabase redirects here because of missing Redirect URL configuration
+// in the Dashboard, forward the token to the login page for processing
+if (window.location.hash && window.location.hash.includes('access_token=')) {
+    window.location.href = '/login' + window.location.hash;
+}
+
 // Smooth scroll for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
@@ -17,9 +24,9 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 window.addEventListener('scroll', () => {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
-    
+
     let current = '';
-    
+
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.clientHeight;
@@ -27,7 +34,7 @@ window.addEventListener('scroll', () => {
             current = section.getAttribute('id');
         }
     });
-    
+
     navLinks.forEach(link => {
         link.classList.remove('active');
         if (link.getAttribute('href').slice(1) === current) {
@@ -38,7 +45,7 @@ window.addEventListener('scroll', () => {
 
 // Button click handlers for CTA buttons
 document.querySelectorAll('.btn-primary, .btn-secondary').forEach(button => {
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
         const buttonText = this.textContent;
         console.log('CTA clicked:', buttonText);
         // Here you would typically navigate to a signup/login page
@@ -72,7 +79,7 @@ document.querySelectorAll('.feature-card, .pricing-card, .step, .problem-item').
 
 // Add hover effect to cards
 document.querySelectorAll('.feature-card, .pricing-card, .problem-item').forEach(card => {
-    card.addEventListener('mouseenter', function() {
+    card.addEventListener('mouseenter', function () {
         this.style.cursor = 'pointer';
     });
 });
@@ -83,13 +90,13 @@ const navbar = document.querySelector('.navbar');
 
 window.addEventListener('scroll', () => {
     let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
+
     if (scrollTop > 100) {
         navbar.style.boxShadow = '0 4px 12px rgba(47, 122, 115, 0.1)';
     } else {
         navbar.style.boxShadow = '0 1px 0 rgba(0, 0, 0, 0.05)';
     }
-    
+
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
 });
 
@@ -107,7 +114,7 @@ function trackEvent(eventName, eventData = {}) {
 
 // Track CTA clicks
 document.querySelectorAll('.btn-primary, .btn-secondary, .btn-outline').forEach(button => {
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
         trackEvent('button_click', {
             buttonText: this.textContent,
             timestamp: new Date().toISOString()
@@ -118,7 +125,7 @@ document.querySelectorAll('.btn-primary, .btn-secondary, .btn-outline').forEach(
 // Debounce function for resize events
 function debounce(func, wait) {
     let timeout;
-    return function(...args) {
+    return function (...args) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
