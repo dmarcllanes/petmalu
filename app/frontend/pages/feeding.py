@@ -1,10 +1,11 @@
-from fasthtml.common import Div, H2, H3, P, Span, Strong, Form, Label, Input, Button, A
+from fasthtml.common import *
 
 from app.frontend.components.navbar import navbar
+from app.frontend.components.bottom_nav import bottom_nav
 from app.frontend.components.feeding_progress import feeding_progress
 
 
-def feeding_page(pet, calc_result=None, error: str | None = None):
+def feeding_page(pet, calc_result=None, error: str | None = None, pet_count: int = 0, total_calories: float = 0, avg_weight: float = 0):
     result_section = ""
     if calc_result:
         result_section = Div(
@@ -57,5 +58,11 @@ def feeding_page(pet, calc_result=None, error: str | None = None):
             ),
             A("Back to Dashboard", href="/", cls="btn"),
             cls="container",
+        ),
+        bottom_nav(
+            pet_count=pet_count,
+            total_calories=total_calories,
+            avg_weight=avg_weight,
+            active_pets=pet_count,
         ),
     )

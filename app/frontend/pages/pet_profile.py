@@ -1,8 +1,6 @@
-from fasthtml.common import (
-    Div, H2, H3, H4, Form, Label, Input, Select, Option, Button, P, A, Span, Strong,
-)
-
+from fasthtml.common import *
 from app.frontend.components.navbar import navbar
+from app.frontend.components.bottom_nav import bottom_nav
 from app.frontend.components.wizard_steps import wizard_steps
 
 SPECIES_OPTIONS = ["dog", "cat"]
@@ -20,9 +18,7 @@ def wizard_page(step: int = 1, data: dict | None = None, error: str | None = Non
         Div(
             H2("Add New Pet"),
             Div(
-                wizard_steps(step),
-                P(error, cls="error") if error else "",
-                _wizard_step_content(step, data),
+                _wizard_step_content(step, data, error),
                 cls="wizard-shell",
             ),
             cls="container",
@@ -30,16 +26,17 @@ def wizard_page(step: int = 1, data: dict | None = None, error: str | None = Non
     )
 
 
-def _wizard_step_content(step: int, data: dict):
+def _wizard_step_content(step: int, data: dict, error: str | None = None):
     if step == 1:
-        return wizard_step_1_content(data)
+        return wizard_step_1_content(data, error)
     elif step == 2:
-        return wizard_step_2_content(data)
-    return wizard_step_3_content(data)
+        return wizard_step_2_content(data, error)
+    return wizard_step_3_content(data, error)
 
 
 def wizard_step_1_content(data: dict, error: str | None = None):
-    return Div(
+    return Form(
+        wizard_steps(1),
         P(error, cls="error") if error else "",
         H3("Basic Info"),
         Div(
@@ -79,7 +76,8 @@ def wizard_step_1_content(data: dict, error: str | None = None):
 
 
 def wizard_step_2_content(data: dict, error: str | None = None):
-    return Div(
+    return Form(
+        wizard_steps(2),
         P(error, cls="error") if error else "",
         H3("Health Profile"),
         # Hidden inputs carry step 1 data forward
@@ -138,7 +136,8 @@ def wizard_step_2_content(data: dict, error: str | None = None):
 def wizard_step_3_content(data: dict, error: str | None = None):
     neutered_display = "Yes" if data.get("is_neutered") == "true" else "No"
 
-    return Div(
+    return Form(
+        wizard_steps(3),
         P(error, cls="error") if error else "",
         H3("Activity & Review"),
         # Hidden inputs carry all previous data
@@ -208,8 +207,9 @@ def wizard_step_3_content(data: dict, error: str | None = None):
                 hx_swap="outerHTML",
                 cls="btn",
             ),
-            Button("Create Pet", type="submit", cls="btn btn-primary btn-lg",
-                   formmethod="post", formaction="/pets/new"),
+            Button("Create Pet", type="button",
+                   cls="btn btn-primary btn-lg",
+                   onclick="var btn=this;btn.disabled=true;btn.textContent='Creating...';fetch('/pets/new',{method:'POST',body:new FormData(btn.closest('form')),redirect:'manual'}).then(function(r){console.log('Response:',r.status,r.type,r.ok);if(r.type==='opaqueredirect'){window.location.href='/dashboard';return}return r.text().then(function(t){console.log('Body:',t.substring(0,500));var tmp=document.createElement('div');tmp.innerHTML=t;var errEl=tmp.querySelector('#create-error');var msg=errEl?errEl.textContent.trim():'Status '+r.status+': '+tmp.textContent.substring(0,200);alert(msg);btn.disabled=false;btn.textContent='Create Pet'})}).catch(function(e){alert('Error: '+e);btn.disabled=false;btn.textContent='Create Pet'})"),
             cls="wizard-actions",
         ),
         id="wizard-content",
@@ -319,7 +319,7 @@ def pet_form_page(pet=None, error: str | None = None):
 # Detail page (restyled)
 # ---------------------------------------------------------------------------
 
-def pet_detail_page(pet, daily_calories: float | None = None, weight_logs=None, trend: str = "insufficient_data"):
+def pet_detail_page(pet, daily_calories: float | None = None, weight_logs=None, trend: str = "insufficient_data", pet_count: int = 0, total_calories: float = 0, avg_weight: float = 0):
     cal_text = f"{daily_calories:.0f} kcal/day" if daily_calories else "Not yet calculated"
     trend_labels = {
         "gaining": "Gaining weight",
@@ -362,5 +362,11 @@ def pet_detail_page(pet, daily_calories: float | None = None, weight_logs=None, 
                 cls="actions",
             ),
             cls="container",
+        ),
+        bottom_nav(
+            pet_count=pet_count,
+            total_calories=total_calories,
+            avg_weight=avg_weight,
+            active_pets=pet_count,
         ),
     )

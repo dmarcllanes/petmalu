@@ -1,4 +1,4 @@
-from fasthtml.common import Div, P, Span
+from fasthtml.common import *
 
 
 def feeding_progress(daily_calories: float, max_calories: float = 3000.0):

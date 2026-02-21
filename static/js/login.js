@@ -21,19 +21,6 @@ if (loginForm) {
     // Wait, let's check the HTML structure in login.py again.
 }
 
-// ==================== PWA Registration ====================
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(registration => {
-                console.log('SW registered:', registration);
-            })
-            .catch(err => {
-                console.log('SW registration failed:', err);
-            });
-    });
-}
-
 // ==================== Utility Functions ====================
 function showError(element, message) {
     if (element) {
@@ -248,7 +235,7 @@ googleBtn.addEventListener('click', async () => {
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: window.location.origin + '/login'
             }
         });
 

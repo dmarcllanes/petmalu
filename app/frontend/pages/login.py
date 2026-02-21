@@ -49,7 +49,7 @@ def login_page():
                 ),
                 Div(
                     Span("🐾", style="font-size: 60px; display: block; text-align: center;"),
-                    H1("LuluPet", style="margin-top: 10px; margin-bottom: 0; color: #2F7A73; text-align: center;"),
+                    H1("MukaPet", style="margin-top: 10px; margin-bottom: 0; color: #2F7A73; text-align: center;"),
                     style="text-align: center; margin-bottom: 30px;"
                 ),
                 H2('Welcome Back', style="margin-top: 0; margin-bottom: 10px; text-align: center;"),

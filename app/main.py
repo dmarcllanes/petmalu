@@ -3,9 +3,12 @@ from pydantic import BaseModel, ValidationError
 
 # Database & Models
 from app.database import pet_repo, weight_repo, user_repo
+from app.database.user_settings_repo import get_or_create_settings, update_user_settings
+from app.database.subcription_repo import get_or_create_free_subscription
 from app.models.pet_models import PetCreate, PetUpdate
 from app.models.feeding_models import FeedingCalcRequest
 from app.models.weight_models import WeightLogCreate
+from app.models.user_settings import UserSettingsUpdate
 
 # Services
 from app.backend.core.constants import FREE_PET_LIMIT
@@ -16,6 +19,7 @@ from app.backend.services.weight_analyzer import analyze_trend
 from app.frontend.pages.homepage import home_page
 from app.frontend.pages.login import login_page
 from app.frontend.pages.dashboard import dashboard_page
+from app.frontend.pages.settings import settings_page
 from app.frontend.pages.pet_profile import (
     pet_form_page, pet_detail_page, wizard_page,
     wizard_step_1_content, wizard_step_2_content, wizard_step_3_content,
@@ -35,7 +39,7 @@ app, rt = fast_app(
         Meta(name="theme-color", content="#2F7A73"),
         Meta(name="apple-mobile-web-app-capable", content="yes"),
         Meta(name="apple-mobile-web-app-status-bar-style", content="black-translucent"),
-        Meta(name="apple-mobile-web-app-title", content="LuluPet"),
+        Meta(name="apple-mobile-web-app-title", content="MukaPet"),
         Link(rel="manifest", href="/manifest.json"),
         Link(rel="apple-touch-icon", href="/icons/icon-192.png"),
         Link(rel="stylesheet", href="/styles.css"),
@@ -63,8 +67,10 @@ class SessionData(BaseModel):
 # ============================================================================
 
 @rt("/")
-def home():
-    """Marketing homepage"""
+def home(session):
+    """Marketing homepage - redirects to dashboard if logged in"""
+    if session.get('user_id'):
+        return RedirectResponse("/dashboard", status_code=303)
     return home_page()
 
 @rt("/login")
@@ -76,6 +82,11 @@ def login():
 def manifest():
     """Serve PWA manifest"""
     return FileResponse("static/manifest.json", media_type="application/json")
+
+@rt("/.well-known/appspecific/com.chrome.devtools.json")
+def chrome_devtools():
+    """Suppress Chrome DevTools 404 warning"""
+    return {}
 
 @rt("/dashboard")
 def dashboard(session):
@@ -120,17 +131,127 @@ async def set_session(data: SessionData, session):
     session['user_id'] = data.user_id
     return {"status": "success"}
 
-@rt("/logout", methods=["POST"])
+@rt("/logout", methods=["GET", "POST"])
 async def logout(session):
-    """Clear session and redirect to login"""
+    """Clear session and redirect to homepage"""
     session.clear()
-    return RedirectResponse("/login", status_code=303)
+    return RedirectResponse("/", status_code=303)
+
+@rt("/settings")
+def settings(session, tab: str = "profile"):
+    """Unified settings page with tabs - protected"""
+    if not session.get('user_id'):
+        return RedirectResponse("/login", status_code=303)
+
+    user_id = session['user_id']
+    user = user_repo.get_user(user_id)
+    user_settings = get_or_create_settings(user_id)
+    subscription = get_or_create_free_subscription(user_id)
+    pets = pet_repo.get_all_pets(user_id)
+    total_cal = 0.0
+    for p in pets:
+        try:
+            req = FeedingCalcRequest(
+                weight_kg=p.weight_kg, age_months=p.age_months,
+                activity_level=p.activity_level, is_neutered=p.is_neutered,
+                medical_conditions=p.medical_conditions,
+            )
+            total_cal += calculate_daily_calories(req).daily_calories
+        except ValueError:
+            pass
+    avg_w = sum(p.weight_kg for p in pets) / len(pets) if pets else 0
+
+    return settings_page(
+        user, user_settings, subscription, tab=tab,
+        pet_count=len(pets), total_calories=total_cal, avg_weight=avg_w,
+    )
+
+# Legacy route - redirect to settings
+@rt("/profile")
+def profile_redirect(session):
+    return RedirectResponse("/settings?tab=profile", status_code=303)
+
+@rt("/profile/update", methods=["POST"])
+def update_profile(full_name: str, session):
+    """Update user profile - protected"""
+    if not session.get('user_id'):
+        return RedirectResponse("/login", status_code=303)
+    
+    user_repo.update_user(session['user_id'], {'full_name': full_name})
+    return RedirectResponse("/settings?tab=profile", status_code=303)
+
+@rt("/profile/settings", methods=["POST"])
+def update_settings(
+    session,
+    email_notifications: bool = False,
+    feeding_reminders: bool = False,
+    weight_reminders: bool = False,
+):
+    """Update notification preferences - protected"""
+    if not session.get('user_id'):
+        return RedirectResponse("/login", status_code=303)
+    
+    updates = UserSettingsUpdate(
+        email_notifications=email_notifications,
+        feeding_reminders=feeding_reminders,
+        weight_reminders=weight_reminders,
+    )
+    update_user_settings(session['user_id'], updates)
+    return RedirectResponse("/settings?tab=profile", status_code=303)
+
+@rt("/profile/privacy", methods=["POST"])
+def update_privacy(session, data_sharing: bool = False):
+    """Update privacy settings - protected"""
+    if not session.get('user_id'):
+        return RedirectResponse("/login", status_code=303)
+    
+    updates = UserSettingsUpdate(data_sharing=data_sharing)
+    update_user_settings(session['user_id'], updates)
+    return RedirectResponse("/settings?tab=profile", status_code=303)
+
+# Legacy route - redirect to settings
+@rt("/subscription")
+def subscription_redirect(session):
+    return RedirectResponse("/settings?tab=subscription", status_code=303)
+
+@rt("/subscription/checkout", methods=["POST"])
+def subscription_checkout(plan: str, session):
+    """Create LemonSqueezy checkout session - protected"""
+    if not session.get('user_id'):
+        return RedirectResponse("/login", status_code=303)
+    
+    # TODO: Implement LemonSqueezy checkout URL generation
+    # For now, just redirect back to subscription page
+    # In production, this would create a checkout session and redirect to LemonSqueezy
+    return RedirectResponse("/settings?tab=subscription", status_code=303)
+
+@rt("/subscription/portal")
+def subscription_portal(session):
+    """Redirect to LemonSqueezy customer portal - protected"""
+    if not session.get('user_id'):
+        return RedirectResponse("/login", status_code=303)
+    
+    # TODO: Implement LemonSqueezy customer portal URL
+    # For now, redirect to subscription page
+    return RedirectResponse("/settings?tab=subscription", status_code=303)
+
+# Legacy route - redirect to settings
+@rt("/help")
+def help_redirect():
+    return RedirectResponse("/settings?tab=help", status_code=303)
+
+@rt("/help/contact", methods=["POST"])
+def contact_support(name: str, email: str, message: str, session):
+    """Submit contact form"""
+    # TODO: Save to database and/or send email notification
+    # For now, just redirect back to help page
+    return RedirectResponse("/settings?tab=help", status_code=303)
 
 # ============================================================================
 # PET MANAGEMENT ROUTES
 # ============================================================================
 
-@rt("/pets/new")
+@rt("/pets/new", methods=["GET"])
 def new_pet_form(session):
     """New pet wizard form - protected"""
     if not session.get('user_id'):
@@ -205,14 +326,15 @@ def wizard_to_step_3(
 def create_pet(name: str, species: str, breed: str, weight_kg: str,
                age_months: str, activity_level: str, session, is_neutered: str = ""):
     """Submit new pet"""
-    user_id = session.get('user_id')
-    if pet_repo.count_pets(user_id) >= FREE_PET_LIMIT:
-        return wizard_page(
-            step=1,
-            error=f"Free tier limited to {FREE_PET_LIMIT} pet(s). Delete existing pet first.",
-        )
-
+    print(f"[CREATE PET] Called with name={name}, species={species}, breed={breed}, weight={weight_kg}, age={age_months}, activity={activity_level}, neutered={is_neutered}")
     try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return P("Not logged in. Please refresh and try again.", cls="error", id="create-error")
+
+        if pet_repo.count_pets(user_id) >= FREE_PET_LIMIT:
+            return P(f"Free tier limited to {FREE_PET_LIMIT} pet(s). Delete existing pet first.", cls="error", id="create-error")
+
         data = PetCreate(
             name=name,
             species=species,
@@ -222,20 +344,14 @@ def create_pet(name: str, species: str, breed: str, weight_kg: str,
             activity_level=activity_level,
             is_neutered=is_neutered == "true",
         )
+        pet_repo.create_pet(data, user_id)
+        return RedirectResponse("/dashboard", status_code=303)
     except (ValidationError, ValueError) as e:
-        return wizard_page(
-            step=3,
-            data=dict(
-                name=name, species=species, breed=breed,
-                weight_kg=weight_kg, age_months=age_months,
-                activity_level=activity_level, is_neutered=is_neutered,
-            ),
-            error=str(e),
-        )
-
-    user_id = session.get('user_id')
-    pet_repo.create_pet(data, user_id)
-    return RedirectResponse("/dashboard", status_code=303)
+        return P(str(e), cls="error", id="create-error")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return P(f"Error: {e}", cls="error", id="create-error")
 
 @rt("/pets/{pet_id}")
 def get_pet(pet_id: str, session):
@@ -263,7 +379,23 @@ def get_pet(pet_id: str, session):
 
     logs = weight_repo.get_weight_logs(pet_id)
     trend = analyze_trend(logs)
-    return pet_detail_page(pet, daily_cal, logs, trend)
+    all_pets = pet_repo.get_all_pets(user_id)
+    total_cal = 0.0
+    for p in all_pets:
+        try:
+            r = FeedingCalcRequest(
+                weight_kg=p.weight_kg, age_months=p.age_months,
+                activity_level=p.activity_level, is_neutered=p.is_neutered,
+                medical_conditions=p.medical_conditions,
+            )
+            total_cal += calculate_daily_calories(r).daily_calories
+        except ValueError:
+            pass
+    avg_w = sum(p.weight_kg for p in all_pets) / len(all_pets) if all_pets else 0
+    return pet_detail_page(
+        pet, daily_cal, logs, trend,
+        pet_count=len(all_pets), total_calories=total_cal, avg_weight=avg_w,
+    )
 
 @rt("/pets/{pet_id}/edit")
 def edit_pet_form(pet_id: str, session):
@@ -343,7 +475,23 @@ def feeding_view(pet_id: str, session):
     except ValueError as e:
         error = str(e)
 
-    return feeding_page(pet, calc_result, error)
+    all_pets = pet_repo.get_all_pets(user_id)
+    total_cal = 0.0
+    for p in all_pets:
+        try:
+            r = FeedingCalcRequest(
+                weight_kg=p.weight_kg, age_months=p.age_months,
+                activity_level=p.activity_level, is_neutered=p.is_neutered,
+                medical_conditions=p.medical_conditions,
+            )
+            total_cal += calculate_daily_calories(r).daily_calories
+        except ValueError:
+            pass
+    avg_w = sum(p.weight_kg for p in all_pets) / len(all_pets) if all_pets else 0
+    return feeding_page(
+        pet, calc_result, error,
+        pet_count=len(all_pets), total_calories=total_cal, avg_weight=avg_w,
+    )
 
 @rt("/feeding/{pet_id}/calculate", methods=["POST"])
 def calculate_feeding(pet_id: str, session):

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lulupet-v6';
+const CACHE_NAME = 'lulupet-v11';
 const STATIC_ASSETS = [
   '/styles.css',
   '/manifest.json',
@@ -25,6 +25,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Skip service worker for auth callback URLs (contain access_token in hash)
+  if (event.request.mode === 'navigate' && url.href.includes('access_token=')) {
+    return;
+  }
+
   // Cache-first for static assets (css, json, icons)
   if (url.pathname.match(/\.(css|js|json|png|svg|ico|woff2?)$/)) {
     event.respondWith(
@@ -36,10 +41,22 @@ self.addEventListener('fetch', (event) => {
   // Network-first for HTML pages
   if (event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .then((response) => response)
+        .catch(() =>
+          caches.match(event.request).then(
+            (cached) => cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/html' } })
+          )
+        )
     );
     return;
   }
 
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    fetch(event.request).catch(() =>
+      caches.match(event.request).then(
+        (cached) => cached || new Response('Offline', { status: 503 })
+      )
+    )
+  );
 });

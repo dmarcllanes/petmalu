@@ -1,4 +1,4 @@
-from fasthtml.common import Div, Span
+from fasthtml.common import *
 
 
 STEP_LABELS = ["Basic Info", "Health Profile", "Activity & Review"]

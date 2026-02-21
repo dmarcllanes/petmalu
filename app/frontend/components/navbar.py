@@ -1,13 +1,20 @@
-from fasthtml.common import Nav, A, Div, Span, Input, Label, Ul, Li, Button
+from fasthtml.common import *
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def navbar():
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_KEY", "")
+
     return Nav(
         Div(
             # Logo
             A(
-                Span("\U0001f43e", cls="logo-icon"),
-                Span("LuluPet", cls="logo-text"),
+                Span("🐾", cls="logo-icon"),
+                Span("MukaPet", cls="logo-text"),
                 href="/dashboard",
                 cls="logo",
             ),
@@ -22,10 +29,25 @@ def navbar():
             Ul(
                 Li(A("Dashboard", href="/dashboard")),
                 Li(A("Add Pet", href="/pets/new")),
-                Li(A("Logout", href="/logout", cls="btn-logout")),
+                Li(A("Profile", href="/settings")),
+                Li(A("Logout", href="#", cls="btn-logout", id="logoutBtn",
+                      onclick="handleLogout(event)")),
                 cls="nav-links",
             ),
             cls="nav-container",
         ),
+        Script(src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"),
+        Script(f"""
+            async function handleLogout(e) {{
+                e.preventDefault();
+                try {{
+                    const sb = window.supabase.createClient('{supabase_url}', '{supabase_key}');
+                    await sb.auth.signOut();
+                }} catch (err) {{
+                    console.error('Supabase sign-out error:', err);
+                }}
+                window.location.href = '/logout';
+            }}
+        """),
         cls="navbar",
     )

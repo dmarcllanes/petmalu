@@ -1,4 +1,4 @@
-from fasthtml.common import Div, H3, P, A, Span
+from fasthtml.common import *
 
 
 SPECIES_EMOJI = {"dog": "\U0001f436", "cat": "\U0001f431"}

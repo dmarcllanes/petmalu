@@ -26,7 +26,7 @@ MAX_DAILY_CALORIES = 5000
 MAX_ADJUSTMENT_PCT = 0.10
 
 # --- Free tier limits ---
-FREE_PET_LIMIT = 1
+FREE_PET_LIMIT = 10  # TODO: revert to 1 for production
 
 # --- Medical conditions that block advanced features ---
 BLOCKED_MEDICAL_CONDITIONS: list[str] = [
